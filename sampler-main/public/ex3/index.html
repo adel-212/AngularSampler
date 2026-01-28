@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>barre sons</title>
+
+    <link rel="stylesheet" href="../shared/css/theme.css" />
+
+    <style>
+      .row{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+      .btns{ display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; }
+
+      /* ✅ waveform large : prend toute la largeur du container */
+      .wavewrap{
+        position:relative;
+        width:100%;
+        max-width:1200px;       /* augmente si tu veux encore plus long */
+        height:180px;
+        margin-top:.25rem;
+      }
+
+      #wave, #playhead, #trims{
+        position:absolute; inset:0; display:block; border-radius:10px;
+      }
+      /* fond uniquement sous la waveform */
+      #wave{ background:#0b1220; }
+      /* couches au-dessus transparentes */
+      #playhead{ background:transparent; pointer-events:none; }
+      #trims{ background:transparent; cursor:ew-resize; }
+
+      .meta{ opacity:.7; margin-top:.5rem; }
+    </style>
+  </head>
+
+  <body>
+    <main class="container">
+      <h1>barre sons</h1>
+
+      <div class="controls row">
+        <label>Preset</label>
+        <select id="presetSelect" class="select w-44"></select>
+
+        <label>Sound</label>
+        <select id="soundSelect" class="select w-56"></select>
+
+        <a href="/ex4/" class="btn ghost">Open Sequencer (Ex4)</a>
+
+        <button id="playBtn" class="btn">Play</button>
+        <button id="stopBtn" class="btn ghost">Stop</button>
+      </div>
+
+      <div class="wavewrap">
+        <canvas id="wave"></canvas>
+        <canvas id="playhead"></canvas>
+        <canvas id="trims"></canvas>
+      </div>
+      <p id="meta" class="meta"></p>
+
+      <div id="buttonsContainer" class="btns"></div>
+    </main>
+
+    <script type="module" src="/ex3/js/main.js" defer></script>
+  </body>
+</html>

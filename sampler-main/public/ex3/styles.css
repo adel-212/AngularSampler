@@ -1,0 +1,2 @@
+#buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#buttons .btn{padding:.35rem .6rem}

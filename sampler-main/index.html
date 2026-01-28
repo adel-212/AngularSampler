@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Web Audio — Rendu</title>
+  <link rel="stylesheet" href="shared/css/theme.css">
+  <style>
+    .grid{ display:grid; gap:16px; grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+    .card{ background:#101521; border:1px solid var(--border); border-radius:14px; padding:12px; }
+    .card h3{ margin:.2rem 0 .6rem; font-size:1.05rem; color:var(--sub); font-weight:700; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{ border:1px solid var(--border); background:#101521; color:var(--ink); border-radius:12px; padding:9px 12px; cursor:pointer; }
+    .btn.primary{ background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#081017; font-weight:700; border:0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Web Audio — Rendu</h1>
+    <p class="small">Deux démos : <b>Ex3</b> (chargement parallèle + waveform) et <b>Ex4</b> (séquenceur 16 pas).</p>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Exercice 3 — Waveform + Modes de lecture</h3>
+        <p class="small">Usage de <b>Promise.all</b> pour charger/décoder plusieurs sons, boutons PLAY générés et petit graphe audio.</p>
+        <div class="row">
+          <a class="btn primary" href="ex3/">Ouvrir Ex3</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Exercice 4 — 16-step Drum Sequencer</h3>
+        <p class="small">Horloge WebAudio (look-ahead), BPM, swing, mute/solo/vol, save/load.</p>
+        <div class="row"><a class="btn primary" href="ex4/">Ouvrir Ex4</a></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Ex4 — 16-step Drum Sequencer</title>
+  <link rel="stylesheet" href="../shared/css/theme.css" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="module" src="./main.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>16-step Drum Sequencer</h1>
+    <p class="muted">
+      This example uses <code>Promise.all</code> to load & decode multiple drum samples in parallel.
+      Each click on a step schedules a <em>small audio graph</em> (BufferSource → Gain → Master) on the WebAudio clock.
+    </p>
+
+    <div class="panel">
+      <div class="topbar">
+        <button id="play" class="btn primary">Play</button>
+        <button id="stop" class="btn">Stop</button>
+        <label>BPM <input id="bpm" class="number" type="number" value="120" min="40" max="240"></label>
+        <label>Swing <input id="swing" type="range" min="0" max="1" step="0.01" value="0" class="range" style="width:220px"></label>
+        <label>Master Vol <input id="master" type="range" min="0" max="1" step="0.01" value="0.8" class="range" style="width:240px"></label>
+        <button id="clear" class="btn">Clear</button>
+        <button id="save" class="btn">Save</button>
+        <button id="load" class="btn">Load</button>
+        <label>Preset
+          <select id="preset" class="select"></select>
+        </label>
+      </div>
+
+      <div id="grid" class="grid"></div>
+      <p class="hint">Tip: every 4 pads is a beat (vertical separator). Shift-click a pad to toggle an entire column.</p>
+    </div>
+  </div>
+</body>
+</html>

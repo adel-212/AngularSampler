@@ -1,0 +1,23 @@
+.topbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+
+.grid{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.row{
+  display:grid;
+  grid-template-columns: 200px 90px 130px repeat(16, 26px); /* nom / actions / vol / 16 pads */
+  gap:8px; align-items:center;
+}
+.cell{height:28px;display:flex;align-items:center}
+.name{color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actions{display:flex;gap:4px}
+.actions .btn{height:28px;padding:0 .5rem}
+.vol{width:130px;height:28px}
+
+.btn-step{width:26px;height:26px;border-radius:6px;background:#0f1725;border:1px solid #233047;cursor:pointer}
+.btn-step.on{background:#1f3a66}
+.btn-step.playing{outline:2px solid #93c5fd}
+
+@media (max-width:1200px){
+  .row{grid-template-columns: 190px 86px 120px repeat(16, 24px); gap:6px}
+  .btn-step{width:24px;height:24px}
+  .cell{height:26px}
+}

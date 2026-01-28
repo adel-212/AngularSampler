@@ -1,0 +1,11 @@
+#sampler-root .topbar { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap }
+#sampler-root .row    { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; margin-top:.5rem }
+
+#sampler-root .canvas-wrap { position:relative; width:900px; max-width:100% }
+#sampler-root canvas { width:100%; height:140px; border-radius:10px; background:#0b1220; display:block }
+#sampler-root .overlay { position:absolute; left:0; top:0; width:100%; height:140px; pointer-events:none }
+#sampler-root .trim    { position:absolute; left:0; top:0; width:100%; height:140px; pointer-events:auto }
+
+.select { min-width:220px }
+.number { width:5rem }
+.btn.ghost { opacity:.9 }
