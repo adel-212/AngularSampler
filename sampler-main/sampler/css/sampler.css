@@ -1,11 +1,240 @@
-#sampler-root .topbar { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap }
-#sampler-root .row    { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; margin-top:.5rem }
+#sampler-root .topbar {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+  flex-wrap: wrap
+}
 
-#sampler-root .canvas-wrap { position:relative; width:900px; max-width:100% }
-#sampler-root canvas { width:100%; height:140px; border-radius:10px; background:#0b1220; display:block }
-#sampler-root .overlay { position:absolute; left:0; top:0; width:100%; height:140px; pointer-events:none }
-#sampler-root .trim    { position:absolute; left:0; top:0; width:100%; height:140px; pointer-events:auto }
+#sampler-root .row {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: .5rem
+}
 
-.select { min-width:220px }
-.number { width:5rem }
-.btn.ghost { opacity:.9 }
+/* Waveform container - style from ex3 */
+#sampler-root .canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  margin-top: 0.5rem;
+}
+
+#sampler-root .canvas-wrap canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 10px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Background only on waveform canvas */
+#sampler-root #wave {
+  background: #0b1220;
+}
+
+/* Overlay layers are transparent */
+#sampler-root #playhead {
+  background: transparent;
+  pointer-events: none;
+}
+
+#sampler-root #trims {
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.select {
+  min-width: 220px
+}
+
+.number {
+  width: 5rem
+}
+
+.btn.ghost {
+  opacity: .9
+}
+
+/* Progress bar */
+#sampler-root .progress-container {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  background: rgba(16, 21, 33, 0.9);
+  border: 1px solid var(--border, #2a3444);
+  border-radius: 10px;
+}
+
+#sampler-root .progress-label {
+  font-size: 0.85rem;
+  color: var(--sub, #8892a6);
+  margin-bottom: 0.5rem;
+}
+
+#sampler-root .progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #1a1f2e;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#sampler-root .progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  border-radius: 4px;
+  transition: width 0.15s ease-out;
+}
+
+/* Main layout: pads + waveform side by side */
+#sampler-root .sampler-main {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+#sampler-root .waveform-section {
+  flex: 1;
+  min-width: 400px;
+  min-height: 180px;
+}
+
+/* Pads Grid 4x4 */
+#sampler-root .pads-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 320px;
+  flex-shrink: 0;
+}
+
+#sampler-root .pad {
+  aspect-ratio: 1;
+  background: linear-gradient(145deg, #1a1f2e, #141824);
+  border: 1px solid #2a3444;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.1s ease-out;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+#sampler-root .pad.active:hover {
+  background: linear-gradient(145deg, #252b3d, #1a1f2e);
+  border-color: #3a4a5e;
+  transform: scale(1.02);
+}
+
+#sampler-root .pad.active:active,
+#sampler-root .pad.playing {
+  transform: scale(0.95);
+  background: linear-gradient(145deg, #e94560, #1a1f2e);
+  border-color: #e94560;
+  box-shadow: 0 0 20px rgba(233, 69, 96, 0.4);
+}
+
+#sampler-root .pad.selected {
+  border-color: #60a5fa;
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.3);
+}
+
+#sampler-root .pad.empty {
+  opacity: 0.3;
+  cursor: default;
+}
+
+#sampler-root .pad .pad-index {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 0.65rem;
+  color: #5a6a7e;
+  font-weight: 600;
+}
+
+#sampler-root .pad .pad-name {
+  font-size: 0.7rem;
+  color: #a8b4c4;
+  text-align: center;
+  padding: 0 4px;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+/* Keyboard shortcut label */
+#sampler-root .pad .pad-key {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.6rem;
+  color: #60a5fa;
+  font-weight: 700;
+  background: rgba(96, 165, 250, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+#sampler-root .pad.empty .pad-key {
+  opacity: 0.5;
+}
+
+/* Recording section */
+#sampler-root .recording-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(16, 21, 33, 0.6);
+  border: 1px solid #2a3444;
+  border-radius: 10px;
+}
+
+#sampler-root .recording-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#sampler-root .record-btn {
+  background: linear-gradient(145deg, #e94560, #c73e54);
+  border: none;
+}
+
+#sampler-root .record-btn:hover {
+  background: linear-gradient(145deg, #f05673, #e94560);
+}
+
+#sampler-root .record-btn.recording {
+  animation: pulse-recording 1s infinite;
+}
+
+@keyframes pulse-recording {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.7);
+  }
+
+  50% {
+    box-shadow: 0 0 20px 5px rgba(233, 69, 96, 0.4);
+  }
+}
+
+#sampler-root .record-status {
+  font-size: 0.85rem;
+  color: #a8b4c4;
+  min-width: 150px;
+}
+
+#sampler-root .target-pad {
+  min-width: 150px;
+}

@@ -1,0 +1,23 @@
+/* Global Styles - Dark Theme */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #0a0e17 0%, #0f1623 100%);
+  color: #e2e8f0;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

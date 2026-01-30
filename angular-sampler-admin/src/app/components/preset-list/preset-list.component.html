@@ -1,0 +1,167 @@
+<div class="preset-list-container">
+  <div class="header">
+    <h2>Gestion des Presets</h2>
+    <div class="header-actions">
+      <button class="btn btn-create" (click)="openCreateForm()" [disabled]="showCreateForm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Nouveau preset
+      </button>
+      <button class="btn btn-refresh" (click)="loadPresets()" [disabled]="loading()">
+        {{ loading() ? 'Chargement...' : 'Rafraîchir' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulaire de création -->
+  @if (showCreateForm()) {
+    <div class="create-form-container">
+      <h3>Créer un nouveau preset</h3>
+      <div class="create-form">
+        <input
+          type="text"
+          class="create-input"
+          placeholder="Nom du preset (ex: my-drums)"
+          [ngModel]="newPresetName()"
+          (ngModelChange)="newPresetName.set($event)"
+          (keyup.enter)="createPreset()"
+          (keyup.escape)="cancelCreate()"
+          autofocus
+        />
+        <div class="create-actions">
+          <button
+            class="btn btn-save"
+            (click)="createPreset()"
+            [disabled]="creating() || !newPresetName().trim()"
+          >
+            {{ creating() ? 'Création...' : 'Créer' }}
+          </button>
+          <button
+            class="btn btn-cancel"
+            (click)="cancelCreate()"
+            [disabled]="creating()"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+      <p class="create-hint">Le preset sera créé vide. Vous pourrez y ajouter des sons plus tard.</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error-message">
+      <p>{{ error() }}</p>
+      <button class="btn" (click)="loadPresets()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Chargement des presets...</p>
+    </div>
+  } @else if (presets().length === 0 && !showCreateForm()) {
+    <div class="empty-state">
+      <p>Aucun preset trouvé.</p>
+      <button class="btn btn-create" (click)="openCreateForm()">Créer votre premier preset</button>
+    </div>
+  } @else {
+    <div class="preset-grid">
+      @for (preset of presets(); track preset.category) {
+        <div
+          class="preset-card"
+          [class.deleting]="deletingCategory() === preset.category"
+          (click)="openDetail(preset, $event)"
+        >
+          <div class="preset-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18V5l12-2v13"></path>
+              <circle cx="6" cy="18" r="3"></circle>
+              <circle cx="18" cy="16" r="3"></circle>
+            </svg>
+          </div>
+
+          <div class="preset-info">
+            @if (editingCategory() === preset.category) {
+              <div class="edit-form">
+                <input
+                  type="text"
+                  class="edit-input"
+                  [ngModel]="editName()"
+                  (ngModelChange)="editName.set($event)"
+                  (keyup.enter)="saveEdit(preset)"
+                  (keyup.escape)="cancelEdit()"
+                  autofocus
+                />
+                <div class="edit-actions">
+                  <button
+                    class="btn btn-save"
+                    (click)="saveEdit(preset)"
+                    [disabled]="saving()"
+                  >
+                    {{ saving() ? '...' : 'OK' }}
+                  </button>
+                  <button
+                    class="btn btn-cancel"
+                    (click)="cancelEdit()"
+                    [disabled]="saving()"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <h3 class="preset-name">{{ preset.name }}</h3>
+              <p class="preset-count">{{ preset.count }} son{{ preset.count > 1 ? 's' : '' }}</p>
+            }
+          </div>
+
+          @if (editingCategory() !== preset.category) {
+            <div class="preset-actions">
+              <button
+                class="btn btn-edit"
+                (click)="$event.stopPropagation(); startEdit(preset)"
+                title="Renommer"
+                [disabled]="deletingCategory() === preset.category"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                class="btn btn-delete"
+                (click)="$event.stopPropagation(); confirmDelete(preset)"
+                title="Supprimer"
+                [disabled]="deletingCategory() === preset.category"
+              >
+                @if (deletingCategory() === preset.category) {
+                  <div class="btn-spinner"></div>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                }
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal détail du preset -->
+@if (selectedPreset()) {
+  <app-preset-detail
+    [preset]="selectedPreset()!"
+    (close)="closeDetail()"
+    (updated)="onDetailUpdated()"
+  />
+}

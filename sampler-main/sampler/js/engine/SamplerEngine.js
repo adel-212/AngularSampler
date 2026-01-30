@@ -1,6 +1,6 @@
 // SamplerEngine — pur audio, réutilisable sans GUI
-import { fetchPresetSounds } from '../../shared/js/api.js';
-import { loadAndDecodeSound } from '../../shared/js/soundutils.js';
+import { fetchPresetSounds } from '/shared/js/api.js';
+import { loadAndDecodeSound } from '/shared/js/soundutils.js';
 
 export class SamplerEngine {
   constructor(audioContext, opts = {}) {
@@ -18,11 +18,20 @@ export class SamplerEngine {
   setMasterGain(v){ this.master.gain.value = v; }
   onPlay(cb){ this._onPlay = cb; }
 
-  async loadPreset(category) {
+  async loadPreset(category, onProgress = null) {
     const preset = await fetchPresetSounds(category);
     const sounds = preset.sounds || [];
-    const buffers = await Promise.all(sounds.map(s => loadAndDecodeSound(s.url, this.ctx)));
-    this.sounds = sounds.map((s,i)=> ({ ...s, buffer: buffers[i] }));
+    const total = sounds.length;
+    const buffers = [];
+
+    // Chargement avec progression
+    for (let i = 0; i < total; i++) {
+      const buffer = await loadAndDecodeSound(sounds[i].url, this.ctx);
+      buffers.push(buffer);
+      if (onProgress) onProgress((i + 1) / total, sounds[i].name || sounds[i].id);
+    }
+
+    this.sounds = sounds.map((s, i) => ({ ...s, buffer: buffers[i] }));
 
     // init trims (si non présents)
     this.sounds.forEach(s => {
