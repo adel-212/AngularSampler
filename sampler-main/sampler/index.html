@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="fr">
+
 <head>
   <meta charset="utf-8" />
   <title>My Sampler</title>
@@ -9,8 +10,17 @@
   <link rel="stylesheet" href="/sampler/css/sampler.css" />
   <script type="module" src="/sampler/js/main.js"></script>
 </head>
+
 <body>
   <div class="container">
+    <!-- Navigation -->
+    <nav class="global-nav">
+      <a href="/">🏠 Accueil</a>
+      <a href="/sampler/" class="active">🎹 Sampler</a>
+      <a href="/ex4/">🥁 Sequencer</a>
+      <a href="https://angularsampler-frontend.onrender.com" target="_blank">⚙️ Admin</a>
+    </nav>
+
     <h1>My Sampler (Engine + GUI)</h1>
     <p class="muted">
       Reprise d’Ex3/Ex4, refactorisée en <code>SamplerEngine</code> (audio) et <code>SamplerGUI</code> (UI).
@@ -20,4 +30,5 @@
     <div id="sampler-root" class="panel"></div>
   </div>
 </body>
+
 </html>
