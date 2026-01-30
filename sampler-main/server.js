@@ -17,9 +17,12 @@ const PORT = process.env.PORT || 3000;
 // Logs
 app.use(morgan('dev'));
 
-// CORS pour Angular (port 4200)
+// CORS pour Angular (port 4200) et production
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:4200', 'http://127.0.0.1:4200'];
 app.use(cors({
-  origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type']
 }));
