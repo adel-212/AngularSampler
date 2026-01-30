@@ -23,113 +23,45 @@ AngularSamplerAudio/
 
 ---
 
-## Fonctionnalites implementees
+## Utilisation de l'IA
 
-### 1. Sampler avec Waveform et Trim
+Ce projet a ete realise avec l'aide partielle d'outils d'intelligence artificielle. Voici ce qui a ete fait avec l'IA et ce qui a ete code manuellement :
 
-Le sampler affiche la forme d'onde de chaque son et permet d'ajuster les points de debut/fin de lecture avec des poignees de trim.
+### Fait avec l'IA
 
-**Fichiers :**
-- `sampler/js/engine/SamplerEngine.js` - Moteur audio Web Audio API
-- `sampler/ui/WaveformView.js` - Affichage waveform + trims
-- `sampler/ui/SamplerGUI.js` - Interface utilisateur
+- **Tout le CSS/styles** : Les fichiers `theme.css`, `sampler.css`, `styles.css` ont ete generes avec l'IA pour avoir un design moderne (dark mode, gradients, animations). J'ai juste donne les specs de couleurs que je voulais.
 
-**Fonctionnement :**
-- Canvas pour dessiner la waveform
-- Deux poignees draggables pour le trim
-- Persistance dans localStorage
+- **Structure HTML de base** : La navbar globale et les cards de la page d'accueil ont ete generees puis adaptees.
 
-### 2. Mapping clavier AZERTY
+### Code mixte (IA + moi)
 
-Les 16 pads sont mappes sur le clavier francais en grille 4x4.
+- **Support MIDI** : L'IA m'a aide a comprendre l'API Web MIDI et a genere le squelette de la fonction `_initMIDI()`. Par contre j'ai du debugger moi-meme le mapping des notes vers les pads (ca marchait pas au debut, les notes etaient decalees) et j'ai ajoute la gestion de la velocity qui n'etait pas prevue.
 
-```
-1  2  3  4   -> Pads 0-3
-A  Z  E  R   -> Pads 4-7
-Q  S  D  F   -> Pads 8-11
-W  X  C  V   -> Pads 12-15
-```
+### Fait manuellement
 
-**Code :** `SamplerGUI.js` - constante `KEYBOARD_MAP`
+- **Architecture Engine/GUI** : La separation entre `SamplerEngine` (audio pur) et `SamplerGUI` (interface) c'est mon choix d'architecture. L'IA avait tendance a tout mettre dans un seul fichier.
 
-### 3. Enregistrement microphone
+- **Logique du trim** : Le calcul des positions en secondes a partir des pixels du canvas, ca m'a pris du temps a comprendre. Les formules de conversion `pxToSec` et `secToPx` dans WaveformView j'ai du les refaire plusieurs fois.
 
-Enregistre depuis le micro du navigateur et affecte le son a un pad.
+- **Correction des bugs** : Notamment le probleme ou le playhead continuait apres la fin du trim, et le bug du contexte audio suspendu sur Chrome.
 
-**API utilisee :** `navigator.mediaDevices.getUserMedia()` + `MediaRecorder`
+---
 
-**Workflow :**
-1. Clic sur "Enregistrer"
-2. Enregistrement en cours (indicateur rouge)
-3. Stop -> decodage audio
-4. Selection du pad cible
-5. Affectation du son
+## Fonctionnalites
 
-### 4. Effets audio par pad
+Voir le fichier [DOCUMENTATION.md](./DOCUMENTATION.md) pour les details techniques de chaque feature.
 
-Chaque pad a ses propres reglages d'effets persistants.
-
-| Effet | Range | Description |
-|-------|-------|-------------|
-| Volume | 0-200% | Gain individuel (GainNode) |
-| Pan | L/C/R | Panoramique stereo (StereoPannerNode) |
-| Pitch | 0.5x-2x | Hauteur/vitesse (playbackRate) |
-
-**Chaine audio :**
-```
-BufferSource -> GainNode -> StereoPannerNode -> Master -> Destination
-```
-
-### 5. Support MIDI
-
-Controle du sampler avec un clavier/pad MIDI externe.
-
-**API :** Web MIDI API (`navigator.requestMIDIAccess()`)
-
-**Mapping :** Notes 36-51 (C1-D#2) -> Pads 0-15
-
-**Fonctionnalites :**
-- Auto-detection des peripheriques (hot-plug)
-- Velocity -> volume du pad
-- Indicateur de connexion dans la topbar
-
-### 6. MongoDB Cloud
-
-Les metadonnees des presets sont stockees dans MongoDB Atlas.
-
-**Collection :** `presets`
-```json
-{
-  "category": "808",
-  "name": "808 Kit",
-  "sounds": [
-    { "id": "kick", "name": "Kick 808", "url": "/sounds/808/kick.wav" }
-  ]
-}
-```
-
-### 7. Upload de fichiers audio
-
-Ajout de sons via URL ou upload de fichier local.
-
-**Backend :** Multer (limite 50MB)
-**Endpoint :** `POST /api/presets/:category/sounds/upload`
-
-### 8. Interface Admin Angular
-
-Application Angular 21 pour gerer les presets.
-
-**Composants :**
-- `preset-list` - Liste des presets
-- `preset-detail` - Detail et edition d'un preset
-
-**Service :** `PresetService` - Communication avec l'API
-
-### 9. Drum Sequencer
-
-Sequenceur 16 pas avec swing et sauvegarde des patterns.
-
-**Fichiers :** `public/ex4/`
+| Feature | Status |
+|---------|--------|
+| Waveform + Trim | OK |
+| Mapping clavier AZERTY | OK |
+| Enregistrement micro | OK |
+| Effets audio (vol/pan/pitch) | OK |
+| Support MIDI | OK |
+| MongoDB Cloud | OK |
+| Upload fichiers | OK |
+| Interface Admin Angular | OK |
+| Drum Sequencer | OK |
 
 ---
 
@@ -154,24 +86,6 @@ npm run build
 
 ---
 
-## Configuration
-
-### Variables d'environnement (Backend)
-
-| Variable | Description |
-|----------|-------------|
-| `MONGODB_URI` | Connexion MongoDB Atlas |
-| `ALLOWED_ORIGINS` | URL du frontend pour CORS |
-| `PORT` | Port du serveur (defaut: 3000) |
-
-### Environnement Angular
-
-**Fichiers :**
-- `src/environments/environment.ts` - Developpement
-- `src/environments/environment.prod.ts` - Production
-
----
-
 ## API REST
 
 | Methode | Endpoint | Description |
@@ -181,24 +95,19 @@ npm run build
 | POST | `/api/presets` | Creer un preset |
 | PUT | `/api/presets/:category` | Modifier un preset |
 | DELETE | `/api/presets/:category` | Supprimer un preset |
-| POST | `/api/presets/:category/sounds` | Ajouter un son |
-| POST | `/api/presets/:category/sounds/upload` | Upload fichier |
-| DELETE | `/api/presets/:category/sounds/:id` | Supprimer un son |
 
 ---
 
 ## Technologies
 
-| Couche | Technologies |
-|--------|--------------|
-| Frontend Sampler | Vanilla JS, Web Audio API, Canvas |
-| Frontend Admin | Angular 21, RxJS, HttpClient |
-| Backend | Node.js, Express, Mongoose, Multer |
-| BDD | MongoDB Atlas |
-| Hebergement | Render.com |
+- Frontend Sampler : Vanilla JS, Web Audio API, Canvas
+- Frontend Admin : Angular 21
+- Backend : Node.js, Express, Mongoose
+- BDD : MongoDB Atlas
+- Hebergement : Render.com
 
 ---
 
 ## Auteur
 
-Projet realise dans le cadre du cours de Web Technologies - M1
+Projet M1 Web Technologies
