@@ -238,3 +238,91 @@
 #sampler-root .target-pad {
   min-width: 150px;
 }
+
+/* Effects Panel */
+#sampler-root .effects-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(145deg, rgba(16, 21, 33, 0.8), rgba(10, 14, 22, 0.9));
+  border: 1px solid #2a3444;
+  border-radius: 10px;
+}
+
+#sampler-root .effects-panel h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #a8b4c4;
+  font-weight: 500;
+}
+
+#sampler-root .effects-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#sampler-root .effect-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #8892a6;
+}
+
+#sampler-root .effect-slider {
+  width: 120px;
+  accent-color: #60a5fa;
+}
+
+#sampler-root .effect-value {
+  min-width: 45px;
+  text-align: right;
+  font-family: monospace;
+  color: #60a5fa;
+  font-size: 0.8rem;
+}
+
+/* MIDI Status Indicator */
+#sampler-root .midi-status {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: rgba(16, 21, 33, 0.8);
+  border: 1px solid #2a3444;
+  color: #8892a6;
+  cursor: default;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+#sampler-root .midi-status.midi-connected {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: #22c55e;
+  color: #22c55e;
+  animation: midi-pulse 2s infinite;
+}
+
+#sampler-root .midi-status.midi-disconnected {
+  opacity: 0.6;
+}
+
+#sampler-root .midi-status.midi-unsupported,
+#sampler-root .midi-status.midi-denied {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+  opacity: 0.7;
+}
+
+@keyframes midi-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 8px 2px rgba(34, 197, 94, 0.2);
+  }
+}

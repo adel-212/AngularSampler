@@ -46,6 +46,7 @@ export class SamplerGUI {
         <label>Master
           <input id="master" type="range" min="0" max="1" step="0.01" value="0.9" class="range" style="width:220px" />
         </label>
+        <span id="midiStatus" class="midi-status" title="Statut MIDI">MIDI: --</span>
       </div>
 
       <div id="progress-container" class="progress-container" style="display:none;">
@@ -70,12 +71,35 @@ export class SamplerGUI {
           <!-- Recording section -->
           <div class="recording-section">
             <div class="recording-controls">
-              <button id="recordBtn" class="btn record-btn">🎤 Enregistrer</button>
+              <button id="recordBtn" class="btn record-btn">Enregistrer</button>
               <span id="recordStatus" class="record-status"></span>
               <select id="targetPad" class="select target-pad">
                 <option value="">Affecter au pad...</option>
               </select>
               <button id="assignRecording" class="btn ghost" disabled>Affecter</button>
+            </div>
+          </div>
+          
+          <!-- Effects Panel -->
+          <div class="effects-panel">
+            <h4>Effets du pad selectionne</h4>
+            <div class="effects-row">
+              <label class="effect-label">
+                <span>Volume</span>
+                <input id="fxVolume" type="range" min="0" max="2" step="0.05" value="1" class="range effect-slider" />
+                <span id="fxVolumeVal" class="effect-value">100%</span>
+              </label>
+              <label class="effect-label">
+                <span>Pan</span>
+                <input id="fxPan" type="range" min="-1" max="1" step="0.05" value="0" class="range effect-slider" />
+                <span id="fxPanVal" class="effect-value">C</span>
+              </label>
+              <label class="effect-label">
+                <span>Pitch</span>
+                <input id="fxPitch" type="range" min="0.5" max="2" step="0.05" value="1" class="range effect-slider" />
+                <span id="fxPitchVal" class="effect-value">1.0x</span>
+              </label>
+              <button id="resetEffects" class="btn ghost">Reset</button>
             </div>
           </div>
         </div>
@@ -117,6 +141,21 @@ export class SamplerGUI {
     this.recordedBuffer = null;
     this.isRecording = false;
 
+    // Effects refs
+    this.fxVolume = this.root.querySelector('#fxVolume');
+    this.fxVolumeVal = this.root.querySelector('#fxVolumeVal');
+    this.fxPan = this.root.querySelector('#fxPan');
+    this.fxPanVal = this.root.querySelector('#fxPanVal');
+    this.fxPitch = this.root.querySelector('#fxPitch');
+    this.fxPitchVal = this.root.querySelector('#fxPitchVal');
+    this.resetEffectsBtn = this.root.querySelector('#resetEffects');
+
+    // MIDI refs and state
+    this.midiStatus = this.root.querySelector('#midiStatus');
+    this.midiAccess = null;
+    this.midiInputs = [];
+    this.midiBaseNote = 36; // C1 = Note 36 → Pad 0
+
     const wave = this.root.querySelector('#wave');
     const o = this.root.querySelector('#playhead');
     const t = this.root.querySelector('#trims');
@@ -141,6 +180,9 @@ export class SamplerGUI {
     this.category = presets[0]?.category ?? null;
     this.presetSel.value = this.category;
     await this._loadCategory(this.category);
+
+    // Initialize MIDI
+    this._initMIDI();
   }
 
   _wire() {
@@ -172,13 +214,43 @@ export class SamplerGUI {
       this._showCurrent(true);
     };
 
+    // Effects handlers
+    this.fxVolume.oninput = () => {
+      const val = parseFloat(this.fxVolume.value);
+      this.engine.setEffect(this.index, 'volume', val);
+      this.fxVolumeVal.textContent = `${Math.round(val * 100)}%`;
+      this._saveEffects();
+    };
+
+    this.fxPan.oninput = () => {
+      const val = parseFloat(this.fxPan.value);
+      this.engine.setEffect(this.index, 'pan', val);
+      this.fxPanVal.textContent = val < -0.1 ? 'L' : val > 0.1 ? 'R' : 'C';
+      this._saveEffects();
+    };
+
+    this.fxPitch.oninput = () => {
+      const val = parseFloat(this.fxPitch.value);
+      this.engine.setEffect(this.index, 'pitch', val);
+      this.fxPitchVal.textContent = `${val.toFixed(2)}x`;
+      this._saveEffects();
+    };
+
+    this.resetEffectsBtn.onclick = () => {
+      this.engine.setEffect(this.index, 'volume', 1.0);
+      this.engine.setEffect(this.index, 'pan', 0);
+      this.engine.setEffect(this.index, 'pitch', 1.0);
+      this._updateEffectsUI();
+      this._saveEffects();
+    };
+
     // Recording button handler
     this.recordBtn.onclick = async () => {
       if (this.isRecording) {
         // Stop recording
         this.mediaRecorder?.stop();
         this.isRecording = false;
-        this.recordBtn.textContent = '🎤 Enregistrer';
+        this.recordBtn.textContent = 'Enregistrer';
         this.recordBtn.classList.remove('recording');
         this.recordStatus.textContent = 'Traitement...';
       } else {
@@ -428,6 +500,10 @@ export class SamplerGUI {
     this.view.drawTrims = () => { original(); clearTimeout(this._t); this._t = setTimeout(persist, 120); };
 
     this.meta.textContent = `Preset: ${this.category} • ${s.name || s.id} • ${s.buffer.duration.toFixed(2)}s`;
+
+    // Load and display effects for current pad
+    this._loadEffects();
+    this._updateEffectsUI();
   }
 
   _play() {
@@ -438,5 +514,123 @@ export class SamplerGUI {
     if (mode === 'single') this.engine.playSingle(this.category, this.index);
     else if (mode === 'together') this.engine.playTogether(this.category);
     else this.engine.playSequential(this.category, parseInt(this.bpmInp.value, 10) || 120);
+  }
+
+  // Effects helper methods
+  _saveEffects() {
+    const s = this.engine.sounds[this.index];
+    if (!s) return;
+    const key = `fx:${this.category}:${s.id || s.name}`;
+    const fx = this.engine.getEffect(this.index);
+    try { localStorage.setItem(key, JSON.stringify(fx)); } catch { }
+  }
+
+  _loadEffects() {
+    const s = this.engine.sounds[this.index];
+    if (!s) return;
+    const key = `fx:${this.category}:${s.id || s.name}`;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const fx = JSON.parse(raw);
+        if (fx.volume !== undefined) this.engine.setEffect(this.index, 'volume', fx.volume);
+        if (fx.pan !== undefined) this.engine.setEffect(this.index, 'pan', fx.pan);
+        if (fx.pitch !== undefined) this.engine.setEffect(this.index, 'pitch', fx.pitch);
+      } catch { }
+    }
+  }
+
+  _updateEffectsUI() {
+    const fx = this.engine.getEffect(this.index);
+    this.fxVolume.value = fx.volume;
+    this.fxVolumeVal.textContent = `${Math.round(fx.volume * 100)}%`;
+    this.fxPan.value = fx.pan;
+    this.fxPanVal.textContent = fx.pan < -0.1 ? 'L' : fx.pan > 0.1 ? 'R' : 'C';
+    this.fxPitch.value = fx.pitch;
+    this.fxPitchVal.textContent = `${fx.pitch.toFixed(2)}x`;
+  }
+
+  // MIDI Support
+  async _initMIDI() {
+    if (!navigator.requestMIDIAccess) {
+      this.midiStatus.textContent = 'MIDI: Non supporte';
+      this.midiStatus.classList.add('midi-unsupported');
+      return;
+    }
+
+    try {
+      this.midiAccess = await navigator.requestMIDIAccess();
+      this._updateMIDIStatus();
+
+      // Listen for device connections/disconnections
+      this.midiAccess.onstatechange = () => this._updateMIDIStatus();
+
+    } catch (err) {
+      console.warn('MIDI access denied:', err);
+      this.midiStatus.textContent = 'MIDI: Refuse';
+      this.midiStatus.classList.add('midi-denied');
+    }
+  }
+
+  _updateMIDIStatus() {
+    // Disconnect existing handlers
+    this.midiInputs.forEach(input => {
+      input.onmidimessage = null;
+    });
+    this.midiInputs = [];
+
+    // Connect to all available MIDI inputs
+    for (const input of this.midiAccess.inputs.values()) {
+      if (input.state === 'connected') {
+        input.onmidimessage = (e) => this._handleMIDIMessage(e);
+        this.midiInputs.push(input);
+      }
+    }
+
+    // Update status display
+    const count = this.midiInputs.length;
+    if (count > 0) {
+      const name = this.midiInputs[0].name?.substring(0, 15) || 'MIDI';
+      this.midiStatus.textContent = `MIDI: ${name}`;
+      this.midiStatus.classList.remove('midi-disconnected', 'midi-unsupported', 'midi-denied');
+      this.midiStatus.classList.add('midi-connected');
+      this.midiStatus.title = `${count} périphérique(s) MIDI connecté(s)`;
+    } else {
+      this.midiStatus.textContent = 'MIDI: --';
+      this.midiStatus.classList.remove('midi-connected');
+      this.midiStatus.classList.add('midi-disconnected');
+      this.midiStatus.title = 'Aucun périphérique MIDI';
+    }
+  }
+
+  _handleMIDIMessage(event) {
+    const [status, note, velocity] = event.data;
+    const command = status & 0xF0;
+
+    // Note On (0x90) with velocity > 0
+    if (command === 0x90 && velocity > 0) {
+      const padIndex = note - this.midiBaseNote;
+
+      // Check if within valid pad range (0-15)
+      if (padIndex >= 0 && padIndex < 16 && padIndex < this.engine.sounds.length) {
+        // Resume audio context if needed
+        if (this.engine.ctx.state === 'suspended') {
+          this.engine.ctx.resume();
+        }
+
+        // Trigger pad with velocity affecting volume (optional)
+        const velocityScale = velocity / 127;
+        const originalVolume = this.engine.getEffect(padIndex).volume;
+
+        // Temporarily boost/reduce volume based on velocity
+        this.engine.setEffect(padIndex, 'volume', originalVolume * velocityScale);
+        this._onPadClick(padIndex);
+
+        // Restore original volume after a short delay
+        setTimeout(() => {
+          this.engine.setEffect(padIndex, 'volume', originalVolume);
+        }, 50);
+      }
+    }
   }
 }
