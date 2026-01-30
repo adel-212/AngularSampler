@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Tests - Sampler Audio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/shared/css/theme.css" />
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .test-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .test-item.running {
+            border-color: var(--accent);
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .test-item.pass {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .test-item.fail {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .test-status {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .test-status.pending {
+            background: #334155;
+            color: #94a3b8;
+        }
+
+        .test-status.running {
+            background: var(--accent);
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .test-status.pass {
+            background: #22c55e;
+            color: white;
+        }
+
+        .test-status.fail {
+            background: #ef4444;
+            color: white;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .test-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .test-time {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-family: monospace;
+        }
+
+        .summary {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .summary-item h3 {
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .summary-item p {
+            color: var(--muted);
+            margin: 0.25rem 0 0 0;
+        }
+
+        .summary-item.passed h3 {
+            color: #22c55e;
+        }
+
+        .summary-item.failed h3 {
+            color: #ef4444;
+        }
+
+        .summary-item.total h3 {
+            color: var(--accent);
+        }
+
+        .test-frame {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 1280px;
+            height: 800px;
+            border: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <nav class="global-nav">
+            <a href="/">Accueil</a>
+            <a href="/sampler/">Sampler</a>
+            <a href="/ex4/">Sequencer</a>
+            <a href="/tests/" class="active">Tests</a>
+            <a href="https://angularsampler-frontend.onrender.com" target="_blank">Admin</a>
+        </nav>
+
+        <h1>Tests du Sampler</h1>
+        <p class="muted">Suite de tests automatises pour verifier le bon fonctionnement du sampler.</p>
+
+        <div class="test-container panel">
+            <div class="test-controls">
+                <button id="run-tests" class="btn primary">Lancer les tests</button>
+                <button id="reset-tests" class="btn ghost">Reset</button>
+            </div>
+
+            <div id="test-list" class="test-list"></div>
+
+            <div id="summary" class="summary hidden">
+                <div class="summary-item passed">
+                    <h3 id="passed-count">0</h3>
+                    <p>Passed</p>
+                </div>
+                <div class="summary-item failed">
+                    <h3 id="failed-count">0</h3>
+                    <p>Failed</p>
+                </div>
+                <div class="summary-item total">
+                    <h3 id="total-time">0ms</h3>
+                    <p>Total Time</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden iframe for testing -->
+    <iframe id="test-frame" class="test-frame" src="about:blank"></iframe>
+
+    <script type="module">
+        // Test definitions
+        const tests = [
+            {
+                name: 'Page loads successfully',
+                run: async (frame) => {
+                    return frame.contentDocument.readyState === 'complete';
+                }
+            },
+            {
+                name: 'Sampler root container exists',
+                run: async (frame) => {
+                    return !!frame.contentDocument.querySelector('#sampler-root');
+                }
+            },
+            {
+                name: '16 pads are rendered',
+                run: async (frame) => {
+                    // Wait for pads to be rendered (they load dynamically)
+                    for (let attempt = 0; attempt < 20; attempt++) {
+                        const pads = frame.contentDocument.querySelectorAll('.pad');
+                        if (pads.length === 16) return true;
+                        await new Promise(r => setTimeout(r, 250));
+                    }
+                    return false;
+                }
+            },
+            {
+                name: 'Preset selector exists',
+                run: async (frame) => {
+                    return !!frame.contentDocument.querySelector('select');
+                }
+            },
+            {
+                name: 'Waveform canvas exists',
+                run: async (frame) => {
+                    return !!frame.contentDocument.querySelector('#wave');
+                }
+            },
+            {
+                name: 'Topbar with controls exists',
+                run: async (frame) => {
+                    return !!frame.contentDocument.querySelector('.topbar');
+                }
+            },
+            {
+                name: 'Play button exists',
+                run: async (frame) => {
+                    const buttons = frame.contentDocument.querySelectorAll('.btn');
+                    return Array.from(buttons).some(b => b.textContent.toLowerCase().includes('play'));
+                }
+            },
+            {
+                name: 'MIDI status indicator exists',
+                run: async (frame) => {
+                    return !!frame.contentDocument.querySelector('.midi-status');
+                }
+            },
+            {
+                name: 'Recording section exists',
+                run: async (frame) => {
+                    return !!frame.contentDocument.querySelector('.recording-section');
+                }
+            },
+            {
+                name: 'Effects panel exists',
+                run: async (frame) => {
+                    return !!frame.contentDocument.querySelector('.effects-panel');
+                }
+            }
+        ];
+
+        // DOM elements
+        const testList = document.getElementById('test-list');
+        const runBtn = document.getElementById('run-tests');
+        const resetBtn = document.getElementById('reset-tests');
+        const summary = document.getElementById('summary');
+        const passedCount = document.getElementById('passed-count');
+        const failedCount = document.getElementById('failed-count');
+        const totalTime = document.getElementById('total-time');
+        const testFrame = document.getElementById('test-frame');
+
+        // Render test list
+        function renderTests() {
+            testList.innerHTML = tests.map((test, i) => `
+        <div class="test-item" id="test-${i}">
+          <div class="test-status pending" id="status-${i}">-</div>
+          <span class="test-name">${test.name}</span>
+          <span class="test-time" id="time-${i}"></span>
+        </div>
+      `).join('');
+        }
+
+        // Update test status
+        function updateTest(index, status, time = null) {
+            const item = document.getElementById(`test-${index}`);
+            const statusEl = document.getElementById(`status-${index}`);
+            const timeEl = document.getElementById(`time-${index}`);
+
+            item.className = `test-item ${status}`;
+            statusEl.className = `test-status ${status}`;
+
+            if (status === 'running') {
+                statusEl.textContent = '...';
+            } else if (status === 'pass') {
+                statusEl.textContent = '✓';
+            } else if (status === 'fail') {
+                statusEl.textContent = '✗';
+            }
+
+            if (time !== null) {
+                timeEl.textContent = `${time}ms`;
+            }
+        }
+
+        // Wait for frame to load
+        function waitForFrame(frame, timeout = 10000) {
+            return new Promise((resolve, reject) => {
+                const start = Date.now();
+
+                const check = () => {
+                    if (frame.contentDocument && frame.contentDocument.readyState === 'complete') {
+                        // Wait a bit more for JS to initialize
+                        setTimeout(resolve, 1000);
+                    } else if (Date.now() - start > timeout) {
+                        reject(new Error('Frame load timeout'));
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+
+                check();
+            });
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            runBtn.disabled = true;
+            summary.classList.add('hidden');
+
+            let passed = 0;
+            let failed = 0;
+            const startTotal = Date.now();
+
+            // Load sampler in iframe
+            testFrame.src = '/sampler/';
+
+            try {
+                await waitForFrame(testFrame);
+            } catch (err) {
+                console.error('Failed to load sampler:', err);
+                runBtn.disabled = false;
+                return;
+            }
+
+            // Run each test
+            for (let i = 0; i < tests.length; i++) {
+                updateTest(i, 'running');
+
+                const start = Date.now();
+
+                try {
+                    const result = await tests[i].run(testFrame);
+                    const time = Date.now() - start;
+
+                    if (result) {
+                        updateTest(i, 'pass', time);
+                        passed++;
+                    } else {
+                        updateTest(i, 'fail', time);
+                        failed++;
+                    }
+                } catch (err) {
+                    console.error(`Test ${i} error:`, err);
+                    updateTest(i, 'fail', 0);
+                    failed++;
+                }
+
+                // Small delay between tests
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            // Show summary
+            const totalTimeMs = Date.now() - startTotal;
+            passedCount.textContent = passed;
+            failedCount.textContent = failed;
+            totalTime.textContent = `${totalTimeMs}ms`;
+            summary.classList.remove('hidden');
+
+            runBtn.disabled = false;
+        }
+
+        // Reset tests
+        function resetTests() {
+            renderTests();
+            summary.classList.add('hidden');
+            testFrame.src = 'about:blank';
+        }
+
+        // Event listeners
+        runBtn.addEventListener('click', runAllTests);
+        resetBtn.addEventListener('click', resetTests);
+
+        // Initial render
+        renderTests();
+    </script>
+</body>
+
+</html>
